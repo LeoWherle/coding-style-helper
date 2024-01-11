@@ -22,9 +22,10 @@ GREEN=""
 YELLOW=""
 NO_CLR=""
 
-ITALLIC=$(tput sitm)
+ITALLIC=""
 
 if [ -n "$COLORTERM" ]; then
+    ITALLIC=$(tput sitm)
     GRAY=$(tput setaf 0)
     RED=$(tput setaf 1)
     GREEN=$(tput setaf 2)
@@ -35,6 +36,7 @@ fi
 
 print_custom_error_message() {
     local log_file="$1"
+    local buffer=""
 
     # Define a table that maps error types to custom messages
     declare -A error_messages
@@ -44,7 +46,7 @@ print_custom_error_message() {
     error_messages["C-G3"]="Preprocessor directives (#ifndef, #define, ...) must be indented"
     error_messages["C-G4"]="Global variables must be avoided, only global constants are allowed"
     error_messages["C-G5"]="Include directives must only include C header files (.h)"
-    error_messages["C-G6"]="Lines must end with a single line feed (LF) character ('\n')"
+    error_messages["C-G6"]="Lines must end with a single line feed (LF) character ('\\\n')"
     error_messages["C-G7"]="No trailing whitespaces must be present at the end of the line"
     error_messages["C-G8"]="No more than 1 empty line must be present"
     error_messages["C-G9"]="Non-trivial constant must be defined as macros or global constants"
@@ -55,7 +57,7 @@ print_custom_error_message() {
     error_messages["C-O4"]="The file name must be clear, explicit following the snake_case convention"
     error_messages["C-F1"]="A function should do one thing and only one thing"
     error_messages["C-F2"]="1 function must contain a verb, be english and follow the snake_case convention"
-    error_messages["C-F3"]="The lenght of a column must not exceed 80 characters ('\\n' included)"
+    error_messages["C-F3"]="The lenght of a column must not exceed 80 characters ('\\\n' included)"
     error_messages["C-F4"]="The body of a function must not exceed 20 lines"
     error_messages["C-F5"]="A function must not contain more than 4 parameters"
     error_messages["C-F6"]="A function without parameters must be declared with 'void'"
@@ -79,7 +81,7 @@ print_custom_error_message() {
     error_messages["C-H3"]="Macros must match only one statement on a single line"
     error_messages["C-A1"]="If a data from a pointer is not modified it should be declared as const"
     error_messages["C-A2"]="Use more accurate types instead of int (size_t, ssize_t, ...)"
-    error_messages["C-A3"]="Files must end with a line break (LF, '\\n')"
+    error_messages["C-A3"]="Files must end with a line break (LF, '\\\n')"
     error_messages["C-A4"]="Global variables and function unused outside of the file must be declared as static"
 
     # Add more error types and messages as needed
@@ -96,8 +98,9 @@ print_custom_error_message() {
             *)      COLOR=$NO_CLR;;
         esac
 
-        echo "$file:$line_number Error: $COLOR$error_type$NO_CLR $ITALLIC\"$custom_message\"$NO_CLR"
+        buffer+="$file:$line_number $COLOR$error_type$NO_CLR $ITALLIC\"$custom_message\"$NO_CLR\n"
     done < <(grep -E '^.+:[0-9]+: [A-Z]+:C-[A-Z0-9]+$' "$log_file")
+    echo -e "$buffer"
 }
 
 if [ $# == 1 ] && [ $1 == "--help" ]; then
